@@ -1,4 +1,4 @@
-WEB程序客户端统一本地存储方案
+WEB程序客户端本地存储方案
 1.根据不同浏览器实现了使用swf、localStorage、cookie作为存储媒介的一组抽象的标准API
 2.自动根据浏览器特性找出最佳存储媒介,媒介优先级遵守如下规则swf > localStorage > cookie
-3.
+3.支持PC,IPAD[IE full、firefox、chrome、safari、opara]
