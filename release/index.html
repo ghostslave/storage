@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!-- ie9 beta目前存在bug，如需支持需要使用以下标签  -->
+<meta http-equiv="X-UA-Compatible" content="IE=7" />
+
+<meta name="author" content="rukey67" />
+<title>Rookie-跨浏览器大容量多数据类型本地存储</title>
+
+<!-- 
+以下引用 Rookie.js 文件，需传递 rookie.swf 文件放置的路径；
+如果用 http 路径引用 swf 文件，当 swf 文件与当前页面不在同一域时，需在 swf 所在域设置对本页面域的授权许可：
+在 swf 同目录下放置名为 policy.txt 的文本文件，policy.txt 中以“行”为单位列出同意授权的域名，如果授权任意域，输入一个“*”符；
+本地存储数据始终在 swf 文件对应域下，跨域使用 swf 文件即可实现 Rookie 本地数据的跨域读写。 
+
+例如：swf 文件放置在 a.com 域，并配置 b.com 域的授权许可
+b.com 的页面在 Rookie.js 后面参数里使用 http 路径引用 a.com 域的 swf 文件，则可以读写 a.com 域下的 Rookie：
+<script type="text/javascript" src="src/Rookie.js?http://a.com/rookie.swf"></script>
+ -->
+ 
+<script type="text/javascript" src="src/Rookie.js?src/rookie.swf"></script>
+
+</head>
+
+<body>
+<script type="text/javascript">
+Rookie(function(){
+	/*
+	写入键值示例，第一个参数是键名，第二个参数是键值，键值支持以下多种数据格式：
+	Number、String、Array、JSON、Date 
+	*/
+	this.write("myID","rukey67");//键值为字符串格式
+	this.write("rukey",{local:"广州",sex:"male"});//键值为JSON式
+	this.write("somedata",[234,534523,234234]);//键值为数组
+	this.write("createTime",new Date());//键值为时间格式
+	
+	/*  读取一个键值，如果过期或者未设置，返回 undefined;
+		判断是否有可用数据可以通过以下方式判断：
+	    if(this.read("abc")){ some code;  }
+	或：if(this.read("abc")==undefined){ some code; }	
+	*/
+	var r=this.read("myID");	//读取键名为 myID 的数据并赋值给 r
+	
+	this.clear("myID");//删除键名为 netease 的本地数据;
+	
+	
+	/***************华丽分隔线*****************************
+	
+	写入键值时可以带一个json格式的可选参数，包含两个可选属性:
+	crossBrowser：布尔值，是否跨浏览器，缺省值为true允许跨浏览器；
+	expire：整型数值，以天为单位的过期时间，缺省值为0，永不过期；
+	
+	使用示例如下：
+	*/
+	
+	this.write("netease","My company",{crossBrowser:false,expire:30});
+	
+	/* 调试
+		运行此页面，可以在IE9/Firefox/Safari/Opera/Chrome 调试工具的 控制台面板查看调试信息
+		ie9      自带工具 developer tools，   按 F12 键启动 
+		Firefox  附加组件 firebug，           按 F12 键启动
+		opera10  自带工具 dragonfly           按 ctrl+shift+i 启动
+		Safari4  自带工具                     按 ctrl+alt+c 启动
+		Chrome   自带工具（和Safari的极类似） 按 ctrl+shift+i 启动
+	
+	
+	存储路径：
+		Windows 95/98/ME/2000/XP
+		c:/Documents and Settings/username/Application Data/Macromedia/Flash 
+		Player/#SharedObjects
+
+		Windows Vista/Windows 7:
+		c:/Users/username/AppData/Roaming/Macromedia/Flash Player/#SharedObjects
+
+		Macintosh OS X:
+		/Users/username/Library/Preferences/Macromedia/Flash 
+		Player/#SharedObjects/web_domain/path_to_application/application_name/obje
+		ct_name.sol
+
+		Linux/Unix:
+		/home/username/.macromedia/Flash_Player/#SharedObjects/web_domain/path_to_
+		application/application_name/object_name.sol
+		
+	Good luck！
+	*/
+});
+</script>
+</body>
+</html>
