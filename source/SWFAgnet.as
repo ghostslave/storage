@@ -25,13 +25,13 @@
 				ExternalInterface.addCallback("setItem",co.setItem_cookie);
 				ExternalInterface.addCallback("getItem" ,co.getItem_cookie);
 				ExternalInterface.addCallback("removeItem",co.removeItem_cookie);
+				ExternalInterface.addCallback("status",co.status_cookie);
 				ExternalInterface.addCallback("callAS",callAS);
 			}
 		}
 		
 		
 		private function getPolicy(e:Event):void{
-			ExternalInterface.call("console.warn","Check CROSS DOMAIN Policy file");
 			var domains:Array=e.target.data.split(/\s+/);
 			for(var i=0,l=domains.length;i<l;i++){
 				flash.system.Security.allowDomain(domains[i]);
@@ -49,18 +49,18 @@
 import flash.net.SharedObject;
 import flash.external.ExternalInterface;
 class Cookie{
-	private var so:SharedObject;
-	private var soName:String;
 	
 	public function Cookie() {
 		
 	}
 	
+	
 	public function keys_cookie(){
-		so=SharedObject.getLocal("all_keys","/");
-		var oldKeys=so.data["stoarge_keys"] || [];
-		var newKeys=[];
-		if(so.size > 0){ 
+		var allSo=SharedObject.getLocal("storage_all_keys","/");
+		var oldKeys=allSo.data["storage_keys"] || {};
+		var newKeys={};
+		var newResu=[];
+		if(allSo.size > 0){ 
 			for(var key in oldKeys){
 				var soItem=SharedObject.getLocal(key,"/");
 				if(soItem.size == 0){
@@ -71,29 +71,30 @@ class Cookie{
 						continue;
 					}
 				}
-				newKeys.push(key);
+				newKeys[key]=true;
+				newResu.push(key);
 			}
 		}
-		so.data["stoarge_keys"]=newKeys;
-		return newKeys
+		allSo.data["storage_keys"]=newKeys;
+		return newResu;
 	}
 	
 	public function clear_cookie(){
-		so=SharedObject.getLocal("all_keys","/");
-		var oldKeys=so.data["stoarge_keys"] || [];
-		if(so.size > 0){ 
+		var allSo=SharedObject.getLocal("storage_all_keys","/");
+		var oldKeys=allSo.data["storage_keys"];
+		if(allSo.size > 0){ 
 			for(var key in oldKeys){
 				var soItem=SharedObject.getLocal(key,"/");
 				soItem.clear();
 			}
 		}
-		so.data["stoarge_keys"]=[];
-		return oldKeys;
+		allSo.data["storage_keys"]={};
+		return [];
 	}
 	
 	
 	public function setItem_cookie(key:String,sValue,config:Object=null){
-		so=SharedObject.getLocal(key,"/");
+		var so=SharedObject.getLocal(key,"/");
 		var cookieValue:String="stoarge_";
 		if(config==null){
 			config={expire:0,crossBrowser:true};
@@ -105,9 +106,7 @@ class Cookie{
 				config.crossBrowser=true;
 			}
 		}
-		if(config.crossBrowser==false){
-			cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser");
-		}
+		if(config.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
 		
 		var oldVal=so.data[cookieValue] || null;
 		so.data[cookieValue]=sValue;
@@ -116,18 +115,18 @@ class Cookie{
 		so.data.createTime=new Date().getTime();
 		so.flush();
 		
-		var sooKeys =SharedObject.getLocal("all_keys","/");
-		var oldKeys =sooKeys.data["stoarge_keys"] || [];
-		oldKeys.push(key);
-		sooKeys.data["stoarge_keys"]=oldKeys;
-		sooKeys.flush();
+		var allSo =SharedObject.getLocal("storage_all_keys","/");
+		var oldKeys =allSo.data["storage_keys"] || {};
+			oldKeys[key]=true;
+		allSo.data["storage_keys"]=oldKeys;
+		allSo.flush();
 		
 		return oldVal;
 	}
 	
 	public function getItem_cookie(key:String){
+		var so=SharedObject.getLocal(key,"/");
 		var cookieValue:String="stoarge_";
-		so=SharedObject.getLocal(key,"/");
 		if(so.size==0){
 			return null;
 		}else{
@@ -144,14 +143,37 @@ class Cookie{
 	
 	public function removeItem_cookie(key:String){
 		var oldVal=null;
+		var so=SharedObject.getLocal(key,"/");
 		var cookieValue:String="stoarge_";
-		so=SharedObject.getLocal(key,"/");
 		if(so.size>0){
 			if(so.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
 			oldVal=so.data[cookieValue];
 		}
 		so.clear();
 		return oldVal;
+	}
+	
+	public function status_cookie(){
+		var allSo=SharedObject.getLocal("storage_all_keys","/");
+		var oldKeys=allSo.data["storage_keys"] || {};
+		var newKeys={};
+		if(allSo.size > 0){ 
+			for(var key in oldKeys){
+				var soItem=SharedObject.getLocal(key,"/");
+				var cookieValue:String="stoarge_";
+				if(soItem.size == 0){
+					continue;
+				}else{
+					if((soItem.data.expire!=0) &&  (soItem.data.createTime+soItem.data.expire*1000*60*60*24 < new Date().getTime())){
+						soItem.clear();
+						continue;
+					}
+				}
+				if(soItem.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
+				newKeys[key] = soItem.data[cookieValue];
+			}
+		}
+		return newKeys;
 	}
 	
 }

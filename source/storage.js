@@ -31,9 +31,7 @@ window.Storage=(function(){
 	
 	
 	function SWFMedium(manager,options){
-		if(Storage["SWF"]){
-			return Storage["SWF"];
-		}
+		if(Storage["SWF"]){ return Storage["SWF"]; }
 		//this
 		var instance=Storage["SWF"]={};
 		
@@ -94,7 +92,7 @@ window.Storage=(function(){
 			})();
 		}
 		
-		instance.data={
+		instance.collection={
 			keys:function(){
 				return instance.getAgent().keys();
 			},
@@ -109,6 +107,9 @@ window.Storage=(function(){
 			},
 			removeItem:function(key){
 				return instance.getAgent().removeItem(key);
+			},
+			status:function(){ 
+				return instance.getAgent().status();
 			}
 		}
 		
@@ -117,6 +118,7 @@ window.Storage=(function(){
 		var flash='<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" width="1" height="1" id="swf_agent"><param name="movie" value="'+config.swfFile+'" /><param name="allowScriptAccess" value="always" /><embed src="'+config.swfFile+'" width="1" height="1" name="swf_agent" allowScriptAccess="always" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" /></object>';
 		var flashCont=document.createElement("div");
 			flashCont.style.cssText="position:absolute;zIndex:-1;height:1px";
+		
 		(function(){
 			if(document.body){
 				flashCont.innerHTML=flash;  
@@ -130,10 +132,66 @@ window.Storage=(function(){
 		return instance;
 	}
 	
-	//html5 localstorage
+	//html5 localStorage
 	function H5LMedium(manager){
-		var instance={};
-		manager.emit("next","h5l");
+		if(Storage["H5L"]){ return Storage["H5L"]; }
+		//this
+		var instance=Storage["H5L"]={};
+		
+		//private
+		var config={agentFile:"/storage/source/h5l-agent.html"};
+		var available=false;
+		
+		//init config
+		for(var key in options){ config[key] = options[key]; }
+		
+		instance.getAgent=function(){
+			var iframe=document.getElementById("H5L-STORAGE");
+			var lookieLocal=iframe.contentWindow.T;
+			return lookieLocal;
+		}
+		
+		instance.isAvailable=function(){
+			return available;
+		}
+		
+		instance.ready=function(){
+			var retry=0;
+			(function(){
+				try{ available=instance.getAgent().callAS(); }catch(e){ }
+				if(available){
+					if(manager){ 
+						manager.emit("medium-done",instance); 
+					}
+					console.info("[medium-h5l]己成功安装！");
+				}else{
+					if(retry<3){
+						setTimeout(arguments.callee,15);
+						retry++;
+						return;
+					}
+					if(manager){ 
+						manager.emit("medium-fail",instance); 
+					}
+					console.warn("[medium-swf]安装失败，可能禁止跨域访问！");
+				}
+			})();
+		}
+		
+		
+		
+		var iframe='<iframe src="'+config.agentFile+'" id="H5L-STORAGE" height="1"/>';
+		var ifrContent=document.createElement("div");
+			ifrContent.style.cssText="position:absolute;zIndex:-1;height:1px";
+		(function(){
+			if(document.body){
+				flashCont.innerHTML=flash;  
+				document.body.insertBefore(flashCont,document.body.firstChild);
+			}else{
+				setTimeout(arguments.callee,15);
+			}
+		})();
+		
 		return instance;
 	}
 	
@@ -162,33 +220,32 @@ window.Storage=(function(){
 		var instance={};
 		Emiter.apply(instance)	//继承事件
 		
-		
 		var _medium=null;
 		var _tasker=[];
-			_tasker.pushTask=function(action,args,callback){
-				var act=action
-					,arg=args
-					,cbk=callback;
-				if(typeof(args)==="function"){
-					arg=[];
-					cbk=args;
-				}
-				_tasker.push({"action":act,"arguments":args,"callback":cbk})
+		_tasker.pushTask=function(action,args,callback){
+			var act=action
+				,arg=args
+				,cbk=callback;
+			if(typeof(args)==="function"){
+				arg=[];
+				cbk=args;
 			}
-			_tasker.popTask=function(){
-				return	_tasker.pop();
-			}
+			_tasker.push({"action":act,"arguments":args,"callback":cbk})
+		}
+		_tasker.popTask=function(){
+			return	_tasker.pop();
+		}
 		
 		/*
 		 * 获取己存储的数据键集合
 		 */
-		instance.key=function(callback){
+		instance.keys=function(callback){
 			if(typeof(callback) === "function"){
 				if(_medium && _medium.isAvailable()){
-					var result=_medium.data.key();
+					var result=_medium.collection.keys();
 					callback.call(instance,result);		
 				}else{
-					_tasker.pushTask("key",callback);
+					_tasker.pushTask("keys",callback);
 				}
 			}
 			return instance;
@@ -199,7 +256,7 @@ window.Storage=(function(){
 		instance.clear=function(callback){
 			if(typeof(callback) === "function"){
 				if(_medium && _medium.isAvailable()){
-					var result=_medium.data.clear();
+					var result=_medium.collection.clear();
 					callback.call(instance,result);		
 				}else{
 					_tasker.pushTask("clear",callback);
@@ -214,7 +271,7 @@ window.Storage=(function(){
 		instance.getItem=function(key,callback){
 			if(typeof(callback) === "function"){
 				if(_medium && _medium.isAvailable()){
-					var result=_medium.data.getItem(key);
+					var result=_medium.collection.getItem(key);
 					callback.call(instance,result);		
 				}else{
 					_tasker.pushTask("getItem",[key],callback);
@@ -229,7 +286,7 @@ window.Storage=(function(){
 		instance.setItem=function(key,value,callback){
 			if( typeof(callback) === "function"){
 				if(_medium && _medium.isAvailable()){
-					var result=_medium.data.setItem(key,value);
+					var result=_medium.collection.setItem(key,value);
 					callback.call(instance,result);		
 				}else{
 					_tasker.pushTask("setItem",[key,value],callback);
@@ -244,7 +301,7 @@ window.Storage=(function(){
 		instance.removeItem=function(key,callback){
 			if(typeof(callback) === "function"){
 				if(_medium && _medium.isAvailable()){
-					var result=_medium.data.removeItem(key);
+					var result=_medium.collection.removeItem(key);
 					callback.call(instance,result);		
 				}else{
 					_tasker.pushTask("removeItem",[key],callback);
@@ -269,11 +326,11 @@ window.Storage=(function(){
 			if(_medium && _medium.isAvailable()){
 				var task, method, args, result,callback;
 				while((task=_tasker.popTask())){
-					method = _medium.data[task['action']];	
+					method = _medium.collection[task['action']];	
 			 		args = task['arguments'];
 					callback =task['callback'];
 					if(typeof(callback) === "function"){
-						result= method.apply(_medium.data,args);	
+						result= method.apply(_medium.collection,args);	
 						callback.call(instance,result);
 					}
 				}
