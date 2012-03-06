@@ -12,20 +12,19 @@
 		public function SWFAgnet() {
 			co=new Cookie();
 			if(ExternalInterface.available){
-				var isCross=ExternalInterface.call("Storage['SWF'].isCross");
+				var isCross=ExternalInterface.call("storage['SWF'].isCross");
 				if(isCross){
 					var loader:URLLoader=new URLLoader();
 					loader.addEventListener(Event.COMPLETE,getPolicy);
 					loader.load(new URLRequest((/.*\//i).exec(this.loaderInfo.url)[0]+"policy.txt"));
 				}else{
-					ExternalInterface.call("Storage['SWF'].ready")
+					ExternalInterface.call("storage['SWF'].ready")
 				}
 				ExternalInterface.addCallback("keys",co.keys_cookie);
 				ExternalInterface.addCallback("clear",co.clear_cookie);
 				ExternalInterface.addCallback("setItem",co.setItem_cookie);
 				ExternalInterface.addCallback("getItem" ,co.getItem_cookie);
 				ExternalInterface.addCallback("removeItem",co.removeItem_cookie);
-				ExternalInterface.addCallback("status",co.status_cookie);
 				ExternalInterface.addCallback("callAS",callAS);
 			}
 		}
@@ -36,7 +35,7 @@
 			for(var i=0,l=domains.length;i<l;i++){
 				flash.system.Security.allowDomain(domains[i]);
 			}
-			ExternalInterface.call("Storage['SWF'].ready")
+			ExternalInterface.call("storage['SWF'].ready")
 		}
 		
 		
@@ -76,6 +75,7 @@ class Cookie{
 			}
 		}
 		allSo.data["storage_keys"]=newKeys;
+		allSo.flush();
 		return newResu;
 	}
 	
@@ -89,7 +89,7 @@ class Cookie{
 			}
 		}
 		allSo.data["storage_keys"]={};
-		return [];
+		allSo.flush();
 	}
 	
 	
@@ -106,7 +106,7 @@ class Cookie{
 				config.crossBrowser=true;
 			}
 		}
-		if(config.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
+		if(config.crossBrowser==false){ cookieValue+=ExternalInterface.call("storage['SWF'].getBrowser"); }
 		
 		var oldVal=so.data[cookieValue] || null;
 		so.data[cookieValue]=sValue;
@@ -137,7 +137,7 @@ class Cookie{
 				}
 			}
 		}
-		if(so.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
+		if(so.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("storage['SWF'].getBrowser"); }
 		return so.data[cookieValue];
 	}
 	
@@ -146,34 +146,10 @@ class Cookie{
 		var so=SharedObject.getLocal(key,"/");
 		var cookieValue:String="stoarge_";
 		if(so.size>0){
-			if(so.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
+			if(so.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("storage['SWF'].getBrowser"); }
 			oldVal=so.data[cookieValue];
 		}
 		so.clear();
 		return oldVal;
 	}
-	
-	public function status_cookie(){
-		var allSo=SharedObject.getLocal("storage_all_keys","/");
-		var oldKeys=allSo.data["storage_keys"] || {};
-		var newKeys={};
-		if(allSo.size > 0){ 
-			for(var key in oldKeys){
-				var soItem=SharedObject.getLocal(key,"/");
-				var cookieValue:String="stoarge_";
-				if(soItem.size == 0){
-					continue;
-				}else{
-					if((soItem.data.expire!=0) &&  (soItem.data.createTime+soItem.data.expire*1000*60*60*24 < new Date().getTime())){
-						soItem.clear();
-						continue;
-					}
-				}
-				if(soItem.data.crossBrowser==false){ cookieValue+=ExternalInterface.call("Storage['SWF'].getBrowser"); }
-				newKeys[key] = soItem.data[cookieValue];
-			}
-		}
-		return newKeys;
-	}
-	
 }

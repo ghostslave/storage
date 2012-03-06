@@ -1,4 +1,8 @@
-var storage= Storage.install({
+var storage= storage.install({
+	order:[
+		{name:"SWFMedium",config:{agentFile:"http://s1.iisii.net/storage/source/swf-agent.html"}},
+		{name:"H5LMedium",config:{agentFile:"http://s1.iisii.net/storage/source/h5l-agent.html",prior:"cookie"}},
+	],
 	done: function(medium) {
 		
 	},
@@ -8,7 +12,7 @@ var storage= Storage.install({
 
 
 
-
+/*
 asyncTest("storage.setItem", function() {
   	
   	storage.setItem("KEY","[String]",function(result){
@@ -83,7 +87,7 @@ asyncTest("storage", function() {
 
 });
 
-
+*/
 
 
 
