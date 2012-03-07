@@ -274,9 +274,7 @@ window.storage=(function(){
 	}
 	
 	
-	
-	
-	
+
 	
 	
 	function FailMedium(manager){
@@ -490,10 +488,4 @@ window.storage=(function(){
 		H5LMedium:H5LMedium
 	}
 }());
-
-
-
-
-
-
 
